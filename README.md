@@ -16,9 +16,9 @@ Demo gratuita de asistencia léxica a la redacción en español. Editor, selecci
 - Cambios: selección de relaciones, acepciones y etiquetas, eliminación de ejemplos literarios y de información no necesaria, formato compacto JSON. No se atribuyen estos datos a Corripio.
 - Derechos de reutilización: https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use
 
-## Corripio (opcional, local)
+## Corripio (incluido, con autorización)
 
-La pestaña Corripio puede responder con el *Diccionario de ideas afines* de Fernando Corripio (© 1985 Editorial Herder): cada persona carga su propio PDF del libro (no tenemos licencia de redistribución, por eso no se incluye), Atril lo analiza en el navegador con pdf.js y guarda el índice (22.341 entradas, con referencias cruzadas «V.» navegables) solo en IndexedDB de ese dispositivo. El PDF y el índice no se suben ni se publican: este repositorio no contiene el diccionario. Editorial: https://herder.com.mx/autor/fernando-corripio
+La pestaña Corripio responde con el *Diccionario de ideas afines* de Fernando Corripio, 2.ª edición, Barcelona: Editorial Herder, 1985, ISBN 84-254-1515-2 (© 1985 Editorial Herder). Se publica con autorización de Editorial Herder para su consulta y distribución gratuita a través de GitHub, con fines exclusivamente educativos y culturales y sin monetización. El índice íntegro (22.341 entradas, con referencias cruzadas «V.» navegables) viaja en `corripio-0.js` … `corripio-5.js` (JSON gzip+base64) y se carga al abrir, sin que el visitante tenga que aportar nada. Opcionalmente, cada persona puede cargar su propio PDF: ese análisis ocurre en su navegador con pdf.js y ese índice se guarda solo en IndexedDB de ese dispositivo. Editorial: https://herder.com.mx/autor/fernando-corripio
 
 Lector PDF: pdf.js 4.10.38 (https://mozilla.github.io/pdf.js/), licencia Apache 2.0, cargado desde jsDelivr con la versión fijada (`cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/`).
 
