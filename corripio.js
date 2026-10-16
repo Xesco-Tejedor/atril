@@ -272,6 +272,7 @@ window.CorripioTab = (function () {
       return;
     }
     if (state.status === 'empty' || (state.status === 'unknown')) {
+      if ((q || '').trim()) h += '<p class="empty">Para explorar «' + esc((q || '').trim()) + '» en el Corripio primero hace falta cargar tu PDF del diccionario:</p>';
       h += '<p>Busca cualquier palabra y Atril responde con las voces afines del Corripio: artículos completos, apartados numerados y referencias cruzadas que puedes seguir.</p>';
       h += '<div class="empty">La obra es © 1985 Editorial Herder y no tenemos licencia para redistribuirla. Por eso Atril no trae el diccionario: <strong>lo aportas tú</strong>. Carga tu propio PDF del Corripio una sola vez; Atril lo analiza aquí mismo, en tu navegador, y guarda el índice solo en este dispositivo. El PDF y el índice no se suben ni se publican en ningún sitio.</div>';
       h += '<p><label class="file-button corr-load">Cargar mi PDF del Corripio<input type="file" id="corr-file" accept="application/pdf,.pdf"></label></p>';
