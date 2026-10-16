@@ -1,8 +1,8 @@
 # Atril · Taller de palabras
 
-▶ **[Abrir la app en una pestaña nueva](https://xesco-tejedor.github.io/atril/)** (en GitHub, Ctrl/Cmd + clic o clic con la rueda para abrirla en pestaña nueva).
+▶ **[Abrir Atril](https://xesco-tejedor.github.io/atril/)**
 
-
+Para abrirla en una pestaña nueva: Ctrl/Cmd + clic (ordenador) o pulsación larga y "Abrir en pestaña nueva" (móvil). GitHub no permite forzar pestaña nueva desde un README.
 
 Demo gratuita de asistencia léxica a la redacción en español. Editor, selección de palabras, propuestas que el usuario revisa, deshacer cambio, importación/exportación TXT y guardado local. Sin IA, cuentas, claves ni servicios de pago.
 
