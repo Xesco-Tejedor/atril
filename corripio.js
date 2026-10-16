@@ -1,13 +1,15 @@
-/* Atril · Corripio local
-   Integra el "Diccionario de ideas afines" de Fernando Corripio usando el PDF
-   que aporta la persona usuaria. Todo el análisis ocurre en su navegador:
-   el PDF y el índice resultante no se suben ni se publican en ningún sitio.
-   El índice se guarda solo en IndexedDB de este navegador.
-   La obra es © 1985 Editorial Herder: Atril no distribuye su contenido. */
+/* Atril · Corripio
+   "Diccionario de ideas afines" de Fernando Corripio, 2.ª edición,
+   Barcelona: Editorial Herder, 1985, ISBN 84-254-1515-2.
+   Atril incluye el diccionario precargado con autorización de Editorial Herder
+   para su consulta y distribución gratuita a través de GitHub, sin uso comercial
+   (corripio-0.js … corripio-5.js: índice íntegro en JSON gzip+base64).
+   La persona usuaria puede cargar su propio PDF para reemplazarlo; ese análisis
+   ocurre en su navegador y ese índice se guarda solo en IndexedDB local. */
 window.CorripioTab = (function () {
   'use strict';
   var DB_NAME = 'atril-corripio', STORE = 'kv';
-  var state = { status: 'unknown', count: 0, pages: 0, when: 0, saved: true };
+  var state = { status: 'unknown', count: 0, pages: 0, when: 0, saved: true, source: null };
   var byNorm = null;      // Map: forma normalizada -> [entradas]
   var pdfjsLib = null;
   var refresh = null;     // función render() de Atril para actualizar al terminar
@@ -192,15 +194,39 @@ window.CorripioTab = (function () {
     });
   }
 
+  // Diccionario precargado con autorización de Editorial Herder (sin IndexedDB)
+  function loadPreloaded() {
+    if (!window.CORRIPIO_DATA || !window.CORRIPIO_DATA.length) return Promise.resolve(false);
+    return fetch('data:application/gzip;base64,' + window.CORRIPIO_DATA.join(''))
+      .then(function (r) {
+        if (!r.ok) throw new Error('fetch');
+        return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();
+      })
+      .then(function (txt) {
+        var entries = JSON.parse(txt);
+        if (!entries || !entries.length) throw new Error('empty');
+        buildMap(entries);
+        state.status = 'ready'; state.count = entries.length;
+        state.pages = 1103; state.when = 0; state.saved = true; state.source = 'preload';
+        return true;
+      })
+      .catch(function () { return false; });
+  }
+
   function ensureLoaded() {
     if (state.status !== 'unknown') return;
     state.status = 'loading';
-    idbGet('index').then(function (idx) {
+    idbGet('index').catch(function () { return null; }).then(function (idx) {
       if (idx && idx.entries && idx.entries.length) {
         buildMap(idx.entries);
         state.status = 'ready'; state.count = idx.entries.length;
         state.pages = idx.meta ? idx.meta.pages : 0; state.when = idx.meta ? idx.meta.when : 0;
-      } else state.status = 'empty';
+        state.source = 'idb';
+        return true;
+      }
+      return loadPreloaded();
+    }).then(function (ok) {
+      if (!ok && state.status === 'loading') state.status = 'empty';
     }).catch(function () { state.status = 'empty'; state.saved = false; })
       .then(function () { if (refresh) refresh(); });
   }
@@ -272,11 +298,9 @@ window.CorripioTab = (function () {
       return;
     }
     if (state.status === 'empty' || (state.status === 'unknown')) {
-      if ((q || '').trim()) h += '<p class="empty">Para explorar «' + esc((q || '').trim()) + '» en el Corripio primero hace falta cargar tu PDF del diccionario:</p>';
       h += '<p>Busca cualquier palabra y Atril responde con las voces afines del Corripio: artículos completos, apartados numerados y referencias cruzadas que puedes seguir.</p>';
-      h += '<div class="empty">La obra es © 1985 Editorial Herder y no tenemos licencia para redistribuirla. Por eso Atril no trae el diccionario: <strong>lo aportas tú</strong>. Carga tu propio PDF del Corripio una sola vez; Atril lo analiza aquí mismo, en tu navegador, y guarda el índice solo en este dispositivo. El PDF y el índice no se suben ni se publican en ningún sitio.</div>';
+      h += '<div class="empty">El diccionario incluido no se pudo cargar en este navegador. Recarga la página; si sigue sin aparecer, puedes cargar tu propio PDF del Corripio: Atril lo analiza aquí mismo y guarda ese índice solo en este dispositivo.</div>';
       h += '<p><label class="file-button corr-load">Cargar mi PDF del Corripio<input type="file" id="corr-file" accept="application/pdf,.pdf"></label></p>';
-      h += '<p class="micro">El análisis de las 1.103 páginas tarda un minuto aproximadamente y solo se hace una vez. Funciona igual en el móvil. <a target="_blank" rel="noopener" href="https://herder.com.mx/autor/fernando-corripio">Ver autor y obra en Herder ↗</a></p>';
       area.innerHTML = h;
       var inp = area.querySelector('#corr-file');
       if (inp) inp.onchange = function () { if (inp.files && inp.files[0]) startLoad(area, inp.files[0]); };
@@ -285,8 +309,14 @@ window.CorripioTab = (function () {
     if (state.status === 'parsing') return; // startLoad ya escribe el progreso
 
     // estado listo
-    h += '<p class="micro">Diccionario listo: <strong>' + state.count.toLocaleString('es-ES') + ' entradas</strong> guardadas solo en este navegador. ';
-    h += '<button type="button" class="corr-mini" id="corr-reload">Cambiar PDF</button> <button type="button" class="corr-mini" id="corr-forget">Olvidar diccionario</button>';
+    h += '<p class="micro">Fernando Corripio, <em>Diccionario de ideas afines</em>, 2.ª edición, Barcelona: Editorial Herder, 1985, ISBN 84-254-1515-2. Se publica con autorización de Editorial Herder para consulta gratuita y sin uso comercial.</p>';
+    if (state.source === 'idb') {
+      h += '<p class="micro">Diccionario listo: <strong>' + state.count.toLocaleString('es-ES') + ' entradas</strong> de tu propio PDF, guardadas solo en este navegador. ';
+    } else {
+      h += '<p class="micro">Diccionario listo: <strong>' + state.count.toLocaleString('es-ES') + ' entradas</strong> precargadas; no hace falta cargar nada. ';
+    }
+    h += '<button type="button" class="corr-mini" id="corr-reload">Cargar otro PDF</button>';
+    if (state.source === 'idb') h += ' <button type="button" class="corr-mini" id="corr-forget">Volver al diccionario incluido</button>';
     if (!state.saved) h += ' <span class="tag">No se pudo guardar: se perderá al cerrar.</span>';
     h += '</p>';
 
@@ -336,8 +366,9 @@ window.CorripioTab = (function () {
     if (fg) fg.onclick = function () {
       if (!confirm('¿Olvidar el diccionario Corripio guardado en este navegador? Tu PDF no se borra.')) return;
       idbDel('index').then(function () {
-        state = { status: 'empty', count: 0, pages: 0, when: 0, saved: true };
+        state = { status: 'unknown', count: 0, pages: 0, when: 0, saved: true, source: null };
         byNorm = null;
+        ensureLoaded();
         if (refresh) refresh();
       });
     };
@@ -357,7 +388,7 @@ window.CorripioTab = (function () {
     var entries = byNorm && byNorm.get(norm(word));
     if (!area) return;
     var h = '<h3>Fernando Corripio · <em>Diccionario de ideas afines</em></h3>';
-    h += '<p class="micro">Diccionario listo: <strong>' + state.count.toLocaleString('es-ES') + ' entradas</strong> guardadas solo en este navegador.</p>';
+    h += '<p class="micro">Fernando Corripio, <em>Diccionario de ideas afines</em>, 2.ª ed., Herder, 1985, ISBN 84-254-1515-2 · con autorización de Editorial Herder. <strong>' + state.count.toLocaleString('es-ES') + ' entradas</strong>.</p>';
     if (!entries) {
       h += '<p class="empty">Sin entrada para «' + esc(word) + '».</p>';
     } else {
@@ -405,8 +436,8 @@ window.CorripioTab = (function () {
     }
     var frag = bs.slice(0, 2).join(' ');
     if (frag.length > 600) frag = frag.slice(0, 600) + '…';
-    return '<section class="sense"><h3>Corripio · tu diccionario local</h3>' +
-      '<p class="micro">Diccionario de ideas afines (© Herder), índice guardado solo en este navegador.</p>' +
+    return '<section class="sense"><h3>Corripio · Diccionario de ideas afines</h3>' +
+      '<p class="micro">Fernando Corripio, 2.ª ed., Herder, 1985, ISBN 84-254-1515-2 · con autorización de Editorial Herder.</p>' +
       '<p class="corr-sec">' + linkify(frag) + '</p>' +
       '<p><button type="button" class="corr-ref" data-ref="' + esc(e.w) + '">Abrir el artículo en Corripio</button></p></section>';
   }
