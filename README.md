@@ -1,5 +1,9 @@
 # Atril · Taller de palabras
 
+▶ **[Abrir la app en una pestaña nueva](https://xesco-tejedor.github.io/atril/)** (en GitHub, Ctrl/Cmd + clic o clic con la rueda para abrirla en pestaña nueva).
+
+
+
 Demo gratuita de asistencia léxica a la redacción en español. Editor, selección de palabras, propuestas que el usuario revisa, deshacer cambio, importación/exportación TXT y guardado local. Sin IA, cuentas, claves ni servicios de pago.
 
 ## Datos y atribución
